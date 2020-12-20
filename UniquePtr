@@ -1,0 +1,88 @@
+#include <iostream>
+#include <cstddef>
+#include <tuple>
+
+template<class T>
+struct DefaultDeleter {
+    void operator()(T* ptr) {
+        delete ptr;
+    }
+};
+
+
+template<class T, class Deleter = DefaultDeleter<T>>
+class UniquePtr {
+private:
+    std::tuple<T*, Deleter>st;
+    void CallDeleter() {
+        auto& C = get_deleter();
+        C(get());
+    }
+
+public:
+    UniquePtr() {
+        st = std::make_tuple(nullptr, Deleter());
+    }
+    UniquePtr(T* x) {
+        st = std::make_tuple(x, Deleter());
+    }
+    UniquePtr(T *x, Deleter y) {
+        st = std::make_tuple(x, y);
+    }
+    UniquePtr(UniquePtr&& other) {
+        st = other.st;
+        other.st = std::make_tuple(nullptr, std::get<1>(st));
+    }
+    const Deleter& get_deleter() const {
+        return std::get<1>(st);
+    }
+    Deleter& get_deleter() {
+        return std::get<1>(st);
+    }
+    UniquePtr& operator=(std::nullptr_t) {
+        CallDeleter();
+        st = std::make_tuple(nullptr, std::get<1>(st));
+        return *this;
+    }
+    UniquePtr& operator=(UniquePtr&& other) {
+        if (this != &other) {
+            CallDeleter();
+            st = other.st;
+            other.st = std::make_tuple(nullptr, std::get<1>(other.st));
+        }
+        return *this;
+    }
+    T& operator*() {
+        return *(std::get<0>(st));
+    }		
+    const T& operator*() const {
+        return *(std::get<0>(st));
+    }
+
+    T* operator->() const noexcept {
+        return std::get<0>(st);
+    }
+    void reset(T* other) noexcept {
+        CallDeleter();
+        st = std::make_tuple(other, std::get<1>(st));
+    }
+    void swap(UniquePtr& other) noexcept {
+        std::swap(other.st, st);
+    }
+    T* get() const noexcept {
+        return std::get<0>(st);
+    }
+    T* release() noexcept {
+        auto f = get();
+        if (get() != nullptr) {
+            st = std::make_tuple(nullptr, std::get<1>(st));
+        }
+        return f;
+    }
+    explicit operator bool() const noexcept {
+        return get() != nullptr;
+    }
+    ~UniquePtr() noexcept {
+        CallDeleter();
+    }
+};
