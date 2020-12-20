@@ -1,0 +1,205 @@
+#include <iostream>
+#include <vector>
+#include <sstream>
+#include <string>
+
+
+// realization for class Polynomial, +, -, *, +=, -=, *=, (), cout, composition, ==, !=, degree, begin, end.
+
+template<typename T, typename Container = std::vector<T>>
+class Polynomial {
+private:
+    Container poly;
+    void normalize() {
+        while (poly.size() && poly.back() == T())
+            poly.pop_back();
+    }
+
+public:
+    Polynomial(const std::vector<T>& coef) {
+        for (const auto& item : coef) {
+            poly.push_back(item);
+        }
+        normalize();
+    }
+    Polynomial(T x = T()) {
+        poly.push_back(x);
+        normalize();
+    }
+    template<typename Iter>
+    Polynomial(Iter first, Iter last) {
+        while (first != last) {
+            poly.push_back(*first);
+            ++first;
+        }
+        normalize();
+    }
+    int Degree() const {
+        return static_cast<int>(poly.size()) - 1;
+    }
+    T operator[](size_t i) const {
+        if (i >= poly.size()) {
+            return 0;
+        }
+        return poly[i];
+    }
+    auto begin() const {
+        return poly.begin();
+    }
+    auto end() const {
+        return poly.end();
+    }
+    bool operator==(const Polynomial<T>& other) const {
+        return (other.poly == poly);
+    }
+    bool operator!=(const Polynomial<T>& other) const {
+        return !(*this == other);
+    }
+    T operator()(T x) const {
+        T res = T();
+        int lst = poly.size();
+        for (int i = lst - 1; i >= 0; --i) {
+            res = res * x + poly[i];
+        }
+        return res;
+    }
+    Polynomial operator+(const Polynomial<T>& other) const {
+        Polynomial<T> res(poly);
+        while (res.poly.size() < other.poly.size()) {
+            res.poly.push_back(0);
+        }
+        for (size_t i = 0; i < other.poly.size(); ++i) {
+            res.poly[i] += other.poly[i];
+        }
+        res.normalize();
+        return res;
+    }
+    Polynomial operator-(const Polynomial<T>& other) const {
+        Polynomial<T> res(poly);
+        while (res.poly.size() < other.poly.size()) {
+            res.poly.push_back(0);
+        }
+        for (size_t i = 0; i < other.poly.size(); ++i) {
+            res.poly[i] -= other.poly[i];
+        }
+        res.normalize();
+        return res;
+    }
+    Polynomial operator*(const Polynomial& other) const {
+        Polynomial<T> res;
+        while (res.poly.size() < other.poly.size() + poly.size()) {
+            res.poly.push_back(0);
+        }
+        for (size_t i = 0; i < poly.size(); ++i) {
+            for (size_t j = 0; j < other.poly.size(); ++j) {
+                res.poly[i + j] += poly[i] * other.poly[j];
+            }
+        }
+        res.normalize();
+        return res;
+    }
+    Polynomial operator+() {
+        return *this;
+    }
+    Polynomial operator-() {
+        Polynomial<T> res = *this;
+        for (auto& item : res.poly)
+            item = -item;
+        res.normalize();
+        return res;
+    }
+    Polynomial operator*(T x) {
+        return (*this) * Polynomial(x);
+    }
+    Polynomial operator+(T x) {
+        return (*this) + Polynomial(x);
+    }
+    Polynomial operator-(T x) {
+        return (*this) - Polynomial(x);
+    }
+    Polynomial& operator+=(const Polynomial& other) {
+        *this = *this + other;
+        return *this;
+    }
+    Polynomial& operator+=(T other) {
+        *this = *this + Polynomial(other);
+        return *this;
+    }
+    Polynomial& operator-=(const Polynomial& other) {
+        *this = *this - other;
+        return *this;
+    }
+    Polynomial& operator-=(T other) {
+        *this = *this - Polynomial(other);
+        return *this;
+    }
+    Polynomial& operator*=(const Polynomial& other) {
+        *this = (*this) * other;
+        return *this;
+    }
+    Polynomial& operator*=(T other) {
+        *this = (*this) * Polynomial(other);
+        return *this;
+    }
+    Polynomial operator&(const Polynomial& other) const {
+        Polynomial ans;
+        for (int i = 0; i <= Degree(); ++i) {
+            Polynomial cur(poly[i]);
+            for (int j = 0; j < i; ++j) {
+                cur *= other;
+            }
+            ans += cur;
+        }
+        return ans;
+    }
+};
+template <typename T>
+Polynomial<T> operator+(T x, const Polynomial<T>& r) {
+    return Polynomial<T>(x) + r;
+}
+template <typename T>
+Polynomial<T> operator-(T x, const Polynomial<T>& r) {
+    return Polynomial<T>(x) - r;
+}
+template <typename T>
+Polynomial<T> operator*(T x, const Polynomial<T>& r) {
+    return Polynomial<T>(x) * r;
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& str, const Polynomial<T>& item) {
+    if (item.Degree() == -1) {
+        str << T();
+    } else if (item.Degree() == 0) {
+        str << item[0];
+    } else {
+        for (int i = item.Degree(); i >= 0; --i) {
+            if (item[i] == T()) {
+                continue;
+            }
+            T c = item[i];
+            if (item[i] < T()) {
+                str << "-";
+                c = -c;
+            } else if (i != item.Degree()) {
+                str << "+";
+            }
+            if (i == 0) {
+                str << c;
+                continue;
+            }
+            std::stringstream fake;
+            fake << c;
+            std::string fakeread;
+            fake >> fakeread;
+            if (fakeread.size() == 1 && fakeread[0] == '1') {
+                str << "x";
+            } else {
+                str << fakeread << "*x";
+            }
+            if (i > 1)
+                str << "^" << i;
+        }
+    }
+    return str;
+}
