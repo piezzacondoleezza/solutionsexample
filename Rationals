@@ -1,0 +1,115 @@
+#include <iostream>
+#include <cmath>
+#include <numeric>
+
+class Rational {
+public:
+    int n, m;
+    void toStandartView() {
+        if (m < 0) {
+            m = -m;
+            n = -n;
+        }
+        int g = std::gcd(abs(n), m);
+        n /= g;
+        m /= g;
+    }
+    Rational(int s = 0, int t = 1) {
+        n = s;
+        m = t;
+        toStandartView();
+    }
+    int numerator() const {
+        return n;
+    }
+    int denominator() const {
+        return m;
+    }
+    Rational operator+() const {
+        return *this;
+    }
+    Rational operator-() const {
+        return Rational(-n, m);
+    }
+    Rational operator+(const Rational& other) const {
+        return Rational(other.n * m + n * other.m, other.m * m);
+    }
+    Rational operator-(const Rational& other) const {
+        return Rational(n * other.m - other.n * m, m * other.m);
+    }
+    Rational operator*(const Rational& other) const {
+        return Rational(n * other.n, m * other.m);
+    }
+    Rational operator/(const Rational& other) const {
+        return Rational(n * other.m, m * other.n);
+    }
+    Rational operator+(int d) const {
+        return *this + Rational(d, 1);
+    }
+    Rational operator-(int d) const {
+        return *this - Rational(d, 1);
+    }
+    Rational operator*(int d) const {
+        return *this * Rational(d, 1);
+    }
+    Rational operator/(int d) const {
+        return *this / Rational(d, 1);
+    }
+    Rational operator++(int) {
+        auto old = *this;
+        this->n += this->m;
+        toStandartView();
+        return old;
+    }
+    Rational& operator++() {
+        this->n += this->m;
+        toStandartView();
+        return *this;
+    }
+    Rational operator--(int) {
+        auto old = *this;
+        this->n -= this->m;
+        toStandartView();
+        return old;
+    }
+    Rational& operator--() {
+        this->n -= this->m;
+        toStandartView();
+        return *this;
+    }
+    Rational& operator+=(const Rational& other) {
+        *this = *this + other;
+        return *this;
+    }
+    Rational& operator-=(const Rational& other) {
+        *this = *this - other;
+        return *this;
+    }
+    Rational& operator*=(const Rational& other) {
+        *this = (*this) * other;
+        return *this;
+    }
+    Rational& operator/=(const Rational& other) {
+        *this = *this / other;
+        return *this;
+    }
+    bool operator==(const Rational& other) const {
+        return (other.n == n && other.m == m);
+    }
+    bool operator!=(const Rational& other) const {
+        return !((*this) == other);
+    }
+};
+
+Rational operator+(int c, const Rational& num) {
+    return Rational(c, 1) + num;
+}
+Rational operator-(int c, const Rational& num) {
+    return Rational(c, 1) - num;
+}
+Rational operator*(int c, const Rational& num) {
+    return Rational(c, 1) * num;
+}
+Rational operator/(int c, const Rational& num) {
+    return Rational(c, 1) / num;
+}
